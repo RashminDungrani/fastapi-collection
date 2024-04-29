@@ -1,0 +1,16 @@
+[tool.poetry]
+name = "01-basics"
+version = "0.1.0"
+description = ""
+authors = ["Rashmin <rashmin.dungrani@kgkmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.12"
+fastapi = "^0.110.2"
+pydantic = "^2.7.1"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
