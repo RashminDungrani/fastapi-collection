@@ -28,6 +28,16 @@ To get started with FastAPI and explore the projects in this repository, follow 
 
 3. Explore the projects in the repository and dive into the README files of individual projects for setup instructions and usage details.
 
+4. Install the Poetry package manager.
+
+5. Set up a virtual environment within the project using Poetry settings:
+    ```bash
+    poetry config virtualenvs.in-project true
+    ```
+    This configuration ensures that the virtual environment is created and managed within the project directory.
+
+
+
 ## Contributing
 
 We welcome contributions to this FastAPI Collection repository! If you have a FastAPI project that you'd like to share with the community or if you want to contribute improvements to existing projects, please follow our [contribution guidelines](CONTRIBUTING.md).
