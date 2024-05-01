@@ -1,6 +1,7 @@
 from datetime import datetime
+from typing import Annotated
 
-from fastapi import APIRouter, HTTPException, Query, status
+from fastapi import APIRouter, Body, HTTPException, Path, status
 from pydantic import UUID4
 
 from app.data.item_data import items
@@ -12,9 +13,14 @@ router = APIRouter()
 # * POST
 @router.post("/item", status_code=status.HTTP_201_CREATED)
 def create_item(
-    inserted_model: ItemInput,
+    inserted_data: Annotated[ItemInput, Body(alias="item_data")],
 ) -> ItemModel:
-    item = ItemModel(**inserted_model.model_dump())
+    """
+    Create an item with all the information:
+
+    - **name**: item name
+    """
+    item = ItemModel(**inserted_data.model_dump())
     items.append(item)
     return item
 
@@ -23,8 +29,8 @@ def create_item(
 ## Path + Quest Body
 @router.put("/item/{id}")
 async def update(
-    id: UUID4,  # Path
-    updated_data: ItemInput,  # request body
+    id: Annotated[UUID4, Path(min_length=1)],
+    updated_data: Annotated[ItemInput, Body(alias="item_data")],  # request body
 ) -> ItemModel:
     "Using Path and Request body"
     found_item = next((item for item in items if item.id == id), None)
