@@ -1,6 +1,4 @@
-from typing import Optional
-
-from fastapi import APIRouter, HTTPException, Query, status
+from fastapi import APIRouter, HTTPException, status
 from pydantic import UUID4
 
 from app.data.item_data import items
@@ -9,16 +7,8 @@ from app.models.item_model import ItemModel
 router = APIRouter()
 
 
-# * GET
-@router.get("/items/all")
-async def get_all(
-    limit: Optional[int] = Query(default=100, ge=0),
-) -> list[ItemModel]:
-    return items[:limit]
-
-
-@router.get("/item")
-async def get_one(id: UUID4 = Query()) -> ItemModel:
+@router.get("/items/{id}")
+async def get_one(id: UUID4) -> ItemModel:
     found_item = next((item for item in items if item.id == id), None)
     if not found_item:
         raise HTTPException(
@@ -29,10 +19,10 @@ async def get_one(id: UUID4 = Query()) -> ItemModel:
 
 # * DELETE
 @router.delete(
-    "/item",
+    "/items/{id}",
     status_code=status.HTTP_204_NO_CONTENT,
 )
-async def delete_item(id: UUID4 = Query()) -> None:
+async def delete_item(id: UUID4) -> None:
     found_item = next((item for item in items if item.id == id), None)
     if not found_item:
         raise HTTPException(
