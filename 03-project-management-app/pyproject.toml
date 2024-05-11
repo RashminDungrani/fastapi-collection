@@ -1,7 +1,7 @@
 [tool.poetry]
-name = "03-sqlalchemy-alembic"
+name = "03-project-management-app"
 version = "0.1.0"
-description = ""
+description = "Creating a FastAPI backend to delve into SQLAlchemy and Alembic, mastering ORM, migrations, and schema management for efficient database operations. The project structure mirrors a real-world project management system, with features like project creation, task assignment, progress tracking, and reporting."
 authors = ["Rashmin Dungrani <rashmindungrani@gmail.com>"]
 readme = "README.md"
 package-mode = false
