@@ -38,7 +38,7 @@ class ENVSettings(BaseSettings):
     APP_NAME: str = ""
     APP_DESC: str = ""
     APP_VERSION: str = "0.1.0"
-    
+
     ## server settings
     SERVER_HOST: str = "0.0.0.0"
     SERVER_PORT: int = 8000
@@ -54,6 +54,18 @@ class ENVSettings(BaseSettings):
     JWT_EXP: int = 5  # minutes
     # REFRESH_TOKEN_EXP_IN_MIN: int = 60 * 24 * 365 * 100  # 100 years
     # ACCESS_TOKEN_EXP_IN_MIN: int = 60 * 24 * 365 * 10  # 10 year
+
+    ## DB Envs
+    DB_SCHEME: str = "postgresql+asyncpg"
+    DB_USER: str = ""
+    DB_PASS: str = ""
+    DB_HOST: str = "localhost"
+    DB_PORT: int = 5432
+    DB_BASE: str = ""
+    DB_ECHO: bool = True
+    DB_URL: str
+    DB_ADMIN_EMAIL: str | None = None
+    DB_ADMIN_PASSWORD: str | None = None
 
     # ssl file paths
     SSL_FULL_CHAIN_PATH: Optional[str] = None

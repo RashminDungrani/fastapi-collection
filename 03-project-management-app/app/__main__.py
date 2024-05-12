@@ -1,9 +1,14 @@
+import asyncio
+
 import uvicorn
+
 from app.core.env_settings import env_settings
+from app.db.insert_initial_data import insert_initial_data
 
 
-def main() -> None:
+async def main() -> None:
     """Entrypoint of the application."""
+    await insert_initial_data()
 
     uvicorn.run(
         "app.routes.application:get_app",
@@ -18,4 +23,4 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    asyncio.run(main())

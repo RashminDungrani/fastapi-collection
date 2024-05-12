@@ -1,73 +1,117 @@
-from datetime import UTC, datetime, timedelta
+from uuid import uuid4
 
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.security import OAuth2PasswordRequestForm
+from pydantic import SecretStr
 
-from app.auth.auth_handler import AuthHandler
-from app.core.env_settings import env_settings
-from app.data.data import users
-from app.models.user_model import User, UserResponse
-
-auth_handler = AuthHandler()
+from app.models.user_model import LoginResponseModel, User, UserInput, UserResponse
+from app.routes.user.user_dao import UserDAO
 
 router = APIRouter()
+
+
+# token_router = APIRouter()
+# container = DependencyContainer()
 
 
 # * POST
 @router.post("/login")
 async def login(
     form_data: OAuth2PasswordRequestForm = Depends(),
-) -> UserResponse:
+    user_dao: UserDAO = Depends(),
+) -> LoginResponseModel:
     # print("login inside")
-    user: User | None = next(
-        (u for u in users if u.username == form_data.username), None
-    )
+    # print(form_data.username)
+    user = await user_dao.select_from_email(form_data.username)
 
     if not user:
-        raise HTTPException(status_code=401, detail="invalid username and/or password")
+        # print("User not found")
+        raise HTTPException(status_code=404, detail="user not found")
 
-    user.hashed_password = auth_handler.get_password_hash(user.password)
+    # print("db password :: " + user.password)
+    # print("input password :: " + form_data.password)
+    from app.auth.auth_handler import auth_handler
+
     is_password_correct = auth_handler.verify_password(
         form_data.password,
-        user.hashed_password,
+        str(user.hashed_password),
     )
     if not is_password_correct:
         raise HTTPException(status_code=401, detail="invalid username and/or password")
 
-    utc_now_time = datetime.now(UTC)
-    token_exp_at = utc_now_time + timedelta(minutes=env_settings.JWT_EXP)
-    token = auth_handler.encode_token(
-        username=form_data.username,
-        issued_at=utc_now_time,
-        expires_at=token_exp_at,
+    # if not user.is_verified:
+    #     raise HTTPException(
+    #         status_code=401,
+    #         detail="One more step, please verify your email that we sent you to your mail",
+    #     )
+
+    assert user.id is not None
+    access_token = auth_handler.generate_access_token(user_id=user.id.__str__())
+
+    # print("access_token_str :: ", access_token)
+
+    return LoginResponseModel(
+        access_token=access_token,
+        token_type="Bearer",
+        user=UserResponse(**user.__dict__),
     )
 
-    # * Response required field "access_token", if this change then swagger /me route wont work
-    user.access_token = token
-    user.token_expires_at = token_exp_at
 
-    # print(t.model_dump(exclude={"user": {"username", "password"}, "value": True}))
-    return user
+@router.post("/register")
+async def register(
+    new_user: UserInput,
+    user_dao: UserDAO = Depends(),
+) -> LoginResponseModel:
+    user = await user_dao.select_from_email(new_user.email)
+
+    # all_users: list[User] = await user_dao.select_all()
+    # db_user = next((employee for employee in all_users if employee.username == new_user.username), None)
+
+    if user:
+        # if db_employee.is_verified == False:
+        #     # TODO: parse issued and exp time
+        #     token = auth_handler.auth_handler.encode_token(db_employee.id)  # type: ignore
+        #     await send_email_verification_mail(name=db_employee.name, to_email=db_employee.email, token=token)
+        #     raise HTTPException(
+        #         status_code=401,
+        #         detail="Already register once, please verify your email from email that we have just sent you and then after you will be able to login",
+        #     )
+        # else:
+        raise HTTPException(
+            status_code=401,
+            detail="email already exist, please try to login with same.",
+        )
+    from app.auth.auth_handler import auth_handler
+
+    assert new_user.password
+    hashed_password = auth_handler.get_hash_password(
+        new_user.password.get_secret_value()
+    )
+    new_user.password = SecretStr(hashed_password)
+
+    db_user = await user_dao.insert(
+        User(
+            **new_user.model_dump(exclude={"password"}),
+            **{
+                "id": uuid4(),
+                "hashed_password": hashed_password,
+            },
+        )
+    )
+
+    # TODO: make this background task
+    # await send_email_verification_mail(name=db_user.name, to_email=db_user.email, token=token)
+
+    assert db_user.id is not None
+    access_token = auth_handler.generate_access_token(user_id=db_user.id.__str__())
+
+    # print("access_token :: ", access_token)
+
+    return LoginResponseModel(
+        access_token=access_token,
+        token_type="Bearer",
+        user=UserResponse(**db_user.__dict__),
+    )
 
 
-# * GET
-@router.get("/me")
-async def get_logged_in_user(
-    user: User = Depends(auth_handler.get_current_user),
-) -> UserResponse:
-    return user
-
-
-# * This aspects two parameters token and token_type,
-# * we can also add additional data like in /login endpoint i passed user object
-token_router = APIRouter()
-
-
-@token_router.post("/token")
-async def login_though_token(
-    result=Depends(login),
-):
-    return result
-
-
-# TODO * POST Register new user
+# TODO: Make Verify user API

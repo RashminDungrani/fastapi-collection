@@ -170,3 +170,5 @@ poetry.lock
 z_things
 z_notes.md
 backup.sql
+**/ruff.toml
+**/notebook.py
